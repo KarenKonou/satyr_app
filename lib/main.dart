@@ -19,7 +19,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Satyr',
       theme: appTheme,
-      initialRoute: '/',
+      initialRoute: (Provider.of<UserModel>(context, listen: false).url != null)
+          ? '/home'
+          : '/',
       routes: {
         '/': (context) => MyInstanceSelect(),
         '/login': (context) => MyLogin(),
