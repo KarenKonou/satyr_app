@@ -1,8 +1,37 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:satyr/models/user.dart';
+import 'package:http/http.dart' as http;
 
 enum Menu { live, url, login, logout }
+
+class Streamers {
+  final List<Streamer> streamers;
+
+  Streamers({this.streamers});
+
+  factory Streamers.fromJson(Map<String, dynamic> json){
+    var list = json['users'] as List;
+    List<Streamer> streamersList = list.map((s) => Streamer.fromJson(s)).toList();
+
+    return Streamers(
+      streamers: streamersList
+    );
+  }
+}
+
+class Streamer {
+  final String username;
+  final String title;
+
+  Streamer({this.username, this.title});
+
+  factory Streamer.fromJson(Map<String, dynamic> json) {
+    return Streamer(username: json['username'], title: json['title']);
+  }
+}
 
 class MyHome extends StatefulWidget {
   @override
@@ -11,6 +40,33 @@ class MyHome extends StatefulWidget {
 
 class _MyHomeState extends State<MyHome> {
   bool _liveOnly = false;
+  Future<Streamers> futureStreamers;
+
+  Future<Streamers> fetchStreamers() async {
+    final opts = Provider.of<UserModel>(context, listen: false);
+    String url;
+
+    if (_liveOnly) {
+      url = opts.url.toString() + "/api/users/live";
+    } else {
+      url = opts.url.toString() + "/api/users/all";
+    }
+
+    final response = await http.post(url, body: "");
+
+    if (response.statusCode == 200) {
+      var data = json.decode(response.body);
+      return Streamers.fromJson(data);
+    } else {
+      throw Exception('Failed to fetch streamers');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    futureStreamers = fetchStreamers();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,12 +83,36 @@ class _MyHomeState extends State<MyHome> {
   }
 
   Widget _buildList() {
-    return ListView(children: [
-      _tile("Awex", "Sea of Thieves"),
-      _tile("Awice", "Sea of Thieves"),
-      _tile("kawen", "some nerd shit"),
-    ]);
+    return FutureBuilder<Streamers>(
+        future: futureStreamers,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            final tiles = snapshot.data.streamers
+                .map((data) => _tile(data.username, data.title))
+                .toList();
+            return ListView(
+              children: tiles,
+            );
+          }
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+              ],
+            ),
+          );
+        });
   }
+
+  ListTile _tile(String username, String title) => ListTile(
+        title: Text(username),
+        subtitle: Text(title),
+        trailing: Icon(
+          Icons.tv,
+          color: null,
+        ),
+      );
 
   Widget _popupMenu() => PopupMenuButton<Menu>(
         onSelected: (Menu result) {
@@ -40,6 +120,7 @@ class _MyHomeState extends State<MyHome> {
             case Menu.live:
               setState(() {
                 _liveOnly = !_liveOnly;
+                fetchStreamers();
               });
               break;
 
@@ -59,15 +140,6 @@ class _MyHomeState extends State<MyHome> {
           }
         },
         itemBuilder: _buildMenuItems,
-      );
-
-  ListTile _tile(String username, String title) => ListTile(
-        title: Text(username),
-        subtitle: Text(title),
-        trailing: Icon(
-          Icons.tv,
-          color: null,
-        ),
       );
 
   List<PopupMenuEntry<Menu>> _buildMenuItems(BuildContext context) {
