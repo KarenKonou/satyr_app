@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:satyr/models/user.dart';
 
-enum Menu { live, login, url }
+enum Menu { live, url, login, logout }
 
 class MyHome extends StatefulWidget {
   @override
@@ -47,25 +47,18 @@ class _MyHomeState extends State<MyHome> {
               Navigator.pushReplacementNamed(context, '/login');
               break;
 
+            case Menu.logout:
+              setState(() {
+                Provider.of<UserModel>(context, listen: false).logout();
+              });
+              break;
+
             case Menu.url:
               Navigator.pushReplacementNamed(context, '/');
               break;
           }
         },
-        itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
-          CheckedPopupMenuItem<Menu>(
-            checked: _liveOnly,
-            value: Menu.live,
-            child: Text("Only show currently live streams"),
-          ),
-          const PopupMenuDivider(),
-          const PopupMenuItem<Menu>(
-            value: Menu.login,
-            child: Text("Login"),
-          ),
-          const PopupMenuItem<Menu>(
-              value: Menu.url, child: Text("Change instance")),
-        ],
+        itemBuilder: _buildMenuItems,
       );
 
   ListTile _tile(String username, String title) => ListTile(
@@ -76,4 +69,27 @@ class _MyHomeState extends State<MyHome> {
           color: null,
         ),
       );
+
+  List<PopupMenuEntry<Menu>> _buildMenuItems(BuildContext context) {
+    final baseList = <PopupMenuEntry<Menu>>[
+      CheckedPopupMenuItem<Menu>(
+        checked: _liveOnly,
+        value: Menu.live,
+        child: Text("Only show currently live streams"),
+      ),
+      const PopupMenuDivider(),
+      const PopupMenuItem<Menu>(
+          value: Menu.url, child: Text("Change instance")),
+    ];
+
+    if (Provider.of<UserModel>(context, listen: false).loggedIn) {
+      baseList.add(
+          const PopupMenuItem<Menu>(value: Menu.logout, child: Text("Logout")));
+    } else {
+      baseList.add(
+          const PopupMenuItem<Menu>(value: Menu.login, child: Text("Login")));
+    }
+
+    return baseList;
+  }
 }

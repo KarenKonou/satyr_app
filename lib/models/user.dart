@@ -4,6 +4,7 @@ class UserModel extends ChangeNotifier {
   Uri url;
   String username;
   String bearer;
+  bool loggedIn = false;
 
   void setUrl(String newurl) {
     url = Uri.parse(newurl);
@@ -11,5 +12,10 @@ class UserModel extends ChangeNotifier {
       url = Uri.parse("https://" + newurl);
     }
   }
-}
 
+  void logout() {
+    username = null;
+    bearer = null;
+    loggedIn = false;
+  }
+}
