@@ -12,13 +12,12 @@ class Streamers {
 
   Streamers({this.streamers});
 
-  factory Streamers.fromJson(Map<String, dynamic> json){
+  factory Streamers.fromJson(Map<String, dynamic> json) {
     var list = json['users'] as List;
-    List<Streamer> streamersList = list.map((s) => Streamer.fromJson(s)).toList();
+    List<Streamer> streamersList =
+        list.map((s) => Streamer.fromJson(s)).toList();
 
-    return Streamers(
-      streamers: streamersList
-    );
+    return Streamers(streamers: streamersList);
   }
 }
 
@@ -40,7 +39,7 @@ class MyHome extends StatefulWidget {
 
 class _MyHomeState extends State<MyHome> {
   bool _liveOnly = false;
-  Future<Streamers> futureStreamers;
+  Future<Streamers> _futureStreamers;
 
   Future<Streamers> fetchStreamers() async {
     final opts = Provider.of<UserModel>(context, listen: false);
@@ -65,7 +64,13 @@ class _MyHomeState extends State<MyHome> {
   @override
   void initState() {
     super.initState();
-    futureStreamers = fetchStreamers();
+    _futureStreamers = fetchStreamers();
+  }
+
+  Future<void> _refreshStreamers() async {
+    setState(() {
+      _futureStreamers = fetchStreamers();
+    });
   }
 
   @override
@@ -84,14 +89,17 @@ class _MyHomeState extends State<MyHome> {
 
   Widget _buildList() {
     return FutureBuilder<Streamers>(
-        future: futureStreamers,
+        future: _futureStreamers,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             final tiles = snapshot.data.streamers
                 .map((data) => _tile(data.username, data.title))
                 .toList();
-            return ListView(
-              children: tiles,
+            return RefreshIndicator(
+              onRefresh: _refreshStreamers,
+              child: ListView(
+                children: tiles,
+              ),
             );
           }
           return Center(
@@ -118,10 +126,8 @@ class _MyHomeState extends State<MyHome> {
         onSelected: (Menu result) {
           switch (result) {
             case Menu.live:
-              setState(() {
                 _liveOnly = !_liveOnly;
-                fetchStreamers();
-              });
+                _refreshStreamers();
               break;
 
             case Menu.login:
