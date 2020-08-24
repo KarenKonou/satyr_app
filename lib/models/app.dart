@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-class UserModel extends ChangeNotifier {
+class AppModel extends ChangeNotifier {
   Uri url;
   String username;
   String bearer;

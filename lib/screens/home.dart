@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:satyr/models/user.dart';
+import 'package:satyr/models/app.dart';
 import 'package:http/http.dart' as http;
 
-enum Menu { live, url, login, logout }
+enum Menu { live, url, login, logout, register }
 
 class Streamers {
   final List<Streamer> streamers;
@@ -42,7 +42,7 @@ class _MyHomeState extends State<MyHome> {
   Future<Streamers> _futureStreamers;
 
   Future<Streamers> fetchStreamers() async {
-    final opts = Provider.of<UserModel>(context, listen: false);
+    final opts = Provider.of<AppModel>(context, listen: false);
     String url;
 
     if (_liveOnly) {
@@ -77,7 +77,7 @@ class _MyHomeState extends State<MyHome> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: Consumer<UserModel>(
+          title: Consumer<AppModel>(
             builder: (context, user, child) {
               return Text("Satyr on ${user.url.toString()}");
             },
@@ -126,17 +126,21 @@ class _MyHomeState extends State<MyHome> {
         onSelected: (Menu result) {
           switch (result) {
             case Menu.live:
-                _liveOnly = !_liveOnly;
-                _refreshStreamers();
+              _liveOnly = !_liveOnly;
+              _refreshStreamers();
               break;
 
             case Menu.login:
               Navigator.pushReplacementNamed(context, '/login');
               break;
 
+            case Menu.register:
+              Navigator.pushReplacementNamed(context, '/register');
+              break;
+
             case Menu.logout:
               setState(() {
-                Provider.of<UserModel>(context, listen: false).logout();
+                Provider.of<AppModel>(context, listen: false).logout();
               });
               break;
 
@@ -160,12 +164,14 @@ class _MyHomeState extends State<MyHome> {
           value: Menu.url, child: Text("Change instance")),
     ];
 
-    if (Provider.of<UserModel>(context, listen: false).loggedIn) {
+    if (Provider.of<AppModel>(context, listen: false).loggedIn) {
       baseList.add(
           const PopupMenuItem<Menu>(value: Menu.logout, child: Text("Logout")));
     } else {
       baseList.add(
           const PopupMenuItem<Menu>(value: Menu.login, child: Text("Login")));
+      baseList.add(const PopupMenuItem<Menu>(
+          value: Menu.register, child: Text("Register")));
     }
 
     return baseList;

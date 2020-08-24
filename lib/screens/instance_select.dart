@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:satyr/models/user.dart';
+import 'package:satyr/models/app.dart';
 
 class MyInstanceSelect extends StatefulWidget {
   @override
@@ -23,7 +23,7 @@ class _MyInstanceSelectState extends State<MyInstanceSelect> {
               child: TextFormField(
                   decoration: InputDecoration(hintText: "Instance URL"),
                   onSaved: (value) {
-                    Provider.of<UserModel>(context, listen: false)
+                    Provider.of<AppModel>(context, listen: false)
                         .setUrl(value);
                   },
                   validator: (value) {
